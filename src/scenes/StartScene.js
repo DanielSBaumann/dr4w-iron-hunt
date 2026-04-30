@@ -79,7 +79,7 @@ export class StartScene extends Phaser.Scene {
   _goToGame() {
     let fired = false;
     this.cameras.main.fade(300, 0, 0, 0, true, (_cam, t) => {
-      if (t >= 1 && !fired) { fired = true; this.scene.start('Stage1Scene'); }
+      if (t >= 1 && !fired) { fired = true; this.scene.start('PlayerTestScene'); }
     });
   }
 }
