@@ -28,7 +28,7 @@ export class WinScene extends Phaser.Scene {
     this.input.keyboard.on('keydown', (e) => {
       if (['KeyX', 'Space', 'Enter'].includes(e.code)) {
         this.scene.stop('HUDScene');
-        this.scene.start('MenuScene');
+        this.scene.start('StartScene');
       }
     });
   }

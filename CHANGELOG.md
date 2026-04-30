@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.3.0] — Milestone 1 — Stage 1 jogável — 2026-04-29
+
+### Adicionado
+- **Stage1Scene**: fase 1 completa — mundo 2304×240, fundo ferrugem, 4 segmentos de chão
+  com gaps jumpáveis, 9 plataformas elevadas (paleta Stage 1)
+- **PatrolDrone**: 5 inimigos voadores inline — patrulha entre pontos, detecta jogador em
+  200px, atira projétil de dano a cada ~2.4s, 2 HP, flash branco ao receber dano
+- **Scrap Hound (boss)**: FSM com 2 fases — Fase 1 (HP>6): anda + 1 tiro a cada 3s;
+  Fase 2 (HP≤6): mais veloz, 2 tiros por rajada a cada 1.8s, flash laranja na transição
+- **Sistema de HP do Player**: `takeDamage(amount)`, `respawn(x, y)`, i-frames de 1200ms
+  com flash de transparência (80ms ciclo), estado `isDead`, evento `player_dead`
+- **Projéteis inimigos**: bullets vermelhos 7×4 disparados por drones e boss, sem gravidade
+- **Colisões completas**: player bullets → drone, player bullets → boss, enemy bullets →
+  player, contato drone/boss → player (todos com guarda de i-frames)
+- **Checkpoint flag**: flag laranja em x=1120; fica ciana ao tocar; salva posição de
+  respawn; queda em pit → respawn no último checkpoint com HP preservado
+- **HUD integrado**: HP do jogador atualizado por evento `player_hurt`; HP do boss exibido
+  ao entrar na arena (x>1480), atualizado a cada hit
+- **Fluxo de cenas**: StartScene → Stage1Scene → WinScene (boss morto) ou GameOverScene
+  (HP=0); WinScene volta ao StartScene; GameOverScene volta ao Stage1Scene
+- **Boss death VFX**: boss pisca 8× antes de desaparecer; fade preto → WinScene
+
+### Corrigido
+- `GameOverScene` apontava para `GameScene` (M0) — agora reinicia `Stage1Scene`
+- `WinScene` apontava para `MenuScene` — agora retorna ao `StartScene`
+- `Player.update()` não retornava quando `_dead = true` — movimento continuava após morte
+
+### Alterado
+- `StartScene._goToGame()`: transição agora vai para `Stage1Scene` em vez de `PlayerTestScene`
+- `Player.js`: adicionado HP system, i-frames, `isDead`/`isInvincible`/`hp` getters
+
+---
+
 ## [0.2.0] — Vertical Slice — 2026-04-29
 
 ### Adicionado

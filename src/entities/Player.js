@@ -75,6 +75,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this._grounded     = false;
     this._facingRight  = true;
     this._shootCooldown = 0;
+    this._hp           = CONFIG.PLAYER_MAX_HP;
+    this._iframeTimer  = 0;
+    this._dead         = false;
 
     Player.setupAnims(scene);
     if (hasSprite) this.anims.play('player_idle', true);
@@ -103,7 +106,33 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   // ─── Update ───────────────────────────────────────────────────────────────────
 
+  get hp()          { return this._hp; }
+  get isInvincible() { return this._iframeTimer > 0; }
+  get isDead()       { return this._dead; }
+
+  takeDamage(amount = 1) {
+    if (this._iframeTimer > 0 || this._dead) return false;
+    this._hp = Math.max(0, this._hp - amount);
+    this._iframeTimer = CONFIG.PLAYER_IFRAME_MS;
+    this.emit('player_hurt', { hp: this._hp, max: CONFIG.PLAYER_MAX_HP });
+    if (this._hp <= 0) {
+      this._dead = true;
+      this.emit('player_dead');
+    }
+    return true;
+  }
+
+  respawn(x, y) {
+    this.setPosition(x, y);
+    this.body.setVelocity(0, 0);
+    this._iframeTimer = CONFIG.PLAYER_IFRAME_MS;
+    this._state = 'idle';
+    this.setAlpha(1);
+    if (this._hasSprite) this.anims.play(ANIM_KEY.idle ?? 'player_idle', true);
+  }
+
   update(dt, input) {
+    if (this._dead) return;
     const body = this.body;
 
     // Grounded + coyote
@@ -151,6 +180,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Shoot cooldown tick
     this._shootCooldown = Math.max(0, this._shootCooldown - dt);
+
+    // Iframe tick + flash
+    if (this._iframeTimer > 0) {
+      this._iframeTimer -= dt;
+      this.setAlpha(Math.floor(this._iframeTimer / 80) % 2 === 0 ? 1 : 0.35);
+      if (this._iframeTimer <= 0) this.setAlpha(1);
+    }
 
     // Shoot — fires while held (held-fire at cooldown rate)
     if (input.isHeld('shoot') && this._shootCooldown <= 0) {

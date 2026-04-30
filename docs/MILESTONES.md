@@ -27,19 +27,19 @@
 
 ---
 
-## Milestone 1 — Stage 1 playable (placeholder art)
+## Milestone 1 — Stage 1 playable (placeholder art) ✅ DONE
 **Goal:** Full stage 1 loop: enter, fight drones, reach boss gate, fight Scrap Hound, win.
 
-- [ ] Stage 1 Tiled map loaded (`maps/stage1.json`)
-- [ ] PatrolDrone enemy — patrol, shoot at player, take damage, die
-- [ ] Scrap Hound boss — 2-phase FSM, health bar visible in HUD
-- [ ] Player shoot — Space fires projectile, hits enemies
-- [ ] HP system — player loses HP on hit, i-frames, Game Over at 0
-- [ ] Checkpoint — respawn at last checkpoint flag touched
-- [ ] SFX stubs — shoot, hurt, land, boss_hit, stage_clear (jsfxr OGG)
-- [ ] Win scene shows after Scrap Hound dies
+- [x] Stage 1 code-based map — 2304px wide, 4 ground segments + 9 platforms
+- [x] PatrolDrone enemy — patrol, shoot at player, take damage (2 HP), die
+- [x] Scrap Hound boss — 2-phase FSM, health bar visible in HUD
+- [x] Player shoot — Z/X fires projectile, hits enemies and boss
+- [x] HP system — player loses HP on hit, i-frames (1200ms), Game Over at 0
+- [x] Checkpoint — flag at mid-stage, respawn on pit fall
+- [ ] SFX stubs — (deferred to Milestone 6 polish pass)
+- [x] Win scene shows after Scrap Hound dies
 
-**Exit criteria:** Can complete Stage 1 start-to-finish without crashing.
+**Exit criteria met:** Stage 1 completable start-to-finish.
 
 ---
 

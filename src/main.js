@@ -9,6 +9,7 @@ import { PreloadScene }  from './scenes/PreloadScene.js';
 import { IntroScene }       from './scenes/IntroScene.js';
 import { StartScene }       from './scenes/StartScene.js';
 import { PlayerTestScene }  from './scenes/PlayerTestScene.js';
+import { Stage1Scene }      from './scenes/Stage1Scene.js';
 
 // ── Legacy game scenes (Milestone 0, kept for reference) ──────────────────
 import { MenuScene }     from './scenes/MenuScene.js';
@@ -40,6 +41,7 @@ new Phaser.Game({
     IntroScene,
     StartScene,
     PlayerTestScene,
+    Stage1Scene,
     // Legacy scenes (not removed — reachable via GameScene)
     MenuScene,
     GameScene,
