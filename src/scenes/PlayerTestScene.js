@@ -81,7 +81,9 @@ export class PlayerTestScene extends Phaser.Scene {
   // ─── Player ───────────────────────────────────────────────────────────────────
 
   _makePlayer() {
-    const tex = this.textures.exists('player') ? 'player' : '__DEFAULT';
+    const tex = this.textures.exists('player_64x64') ? 'player_64x64'
+              : this.textures.exists('player')        ? 'player'
+              : '__DEFAULT';
     this._p = this.physics.add.sprite(60, GROUND_Y - 20, tex);
     this._p.setMaxVelocity(CONFIG.WALK_SPEED * 2, CONFIG.MAX_FALL_SPEED);
     this._p.setCollideWorldBounds(true);
@@ -90,20 +92,27 @@ export class PlayerTestScene extends Phaser.Scene {
   }
 
   _setupAnims() {
-    if (!this.textures.exists('player')) return;
     if (this.anims.exists('p_idle')) { this._hasAnims = true; return; }
 
-    const COLS = 6;
-    const frames = (row, n) =>
-      this.anims.generateFrameNumbers('player', { start: row * COLS, end: row * COLS + n - 1 });
-
-    this.anims.create({ key: 'p_idle', frames: frames(0, 3), frameRate: 6,  repeat: -1 });
-    this.anims.create({ key: 'p_run',  frames: frames(1, 4), frameRate: 10, repeat: -1 });
-    this.anims.create({ key: 'p_jump', frames: frames(2, 1), frameRate: 8,  repeat:  0 });
-    this.anims.create({ key: 'p_fall', frames: frames(3, 1), frameRate: 8,  repeat:  0 });
-
-    this._p.anims.play('p_idle', true);
-    this._hasAnims = true;
+    if (this.textures.exists('player_64x64')) {
+      const f = (frames) => this.anims.generateFrameNumbers('player_64x64', { frames });
+      this.anims.create({ key: 'p_idle', frames: f([0]),     frameRate: 5,  repeat: -1 });
+      this.anims.create({ key: 'p_run',  frames: f([8, 9]),  frameRate: 8,  repeat: -1 });
+      this.anims.create({ key: 'p_jump', frames: f([4]),     frameRate: 10, repeat:  0 });
+      this.anims.create({ key: 'p_fall', frames: f([11]),    frameRate: 8,  repeat:  0 });
+      this._p.anims.play('p_idle', true);
+      this._hasAnims = true;
+    } else if (this.textures.exists('player')) {
+      const COLS = 6;
+      const frames = (row, n) =>
+        this.anims.generateFrameNumbers('player', { start: row * COLS, end: row * COLS + n - 1 });
+      this.anims.create({ key: 'p_idle', frames: frames(0, 3), frameRate: 6,  repeat: -1 });
+      this.anims.create({ key: 'p_run',  frames: frames(1, 4), frameRate: 10, repeat: -1 });
+      this.anims.create({ key: 'p_jump', frames: frames(2, 1), frameRate: 8,  repeat:  0 });
+      this.anims.create({ key: 'p_fall', frames: frames(3, 1), frameRate: 8,  repeat:  0 });
+      this._p.anims.play('p_idle', true);
+      this._hasAnims = true;
+    }
   }
 
   // ─── Bullets ──────────────────────────────────────────────────────────────────
