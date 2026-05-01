@@ -42,7 +42,6 @@ export class PlayerTestScene extends Phaser.Scene {
 
     this._setupAnims();
     this._setup64Anims();
-    this._setup64Preview();
     this.cameras.main.fadeIn(300, 0, 0, 0);
   }
 
@@ -130,7 +129,7 @@ export class PlayerTestScene extends Phaser.Scene {
   // ─── Camera ───────────────────────────────────────────────────────────────────
 
   _makeCamera() {
-    this.cameras.main.setZoom(1.0);
+    this.cameras.main.setZoom(1.75);
     this.cameras.main.setBounds(0, 0, WORLD_W, CONFIG.HEIGHT);
     this.cameras.main.startFollow(this._p, true, 1, 1);
   }
@@ -239,7 +238,6 @@ export class PlayerTestScene extends Phaser.Scene {
         `vx/vy : ${b.velocity.x.toFixed(0)} / ${b.velocity.y.toFixed(0)}`,
         `pos   : ${p.x.toFixed(0)}, ${p.y.toFixed(0)}`,
         `floor : ${grounded}`,
-        this._previewSprite ? `64anim: ${ANIM_64_KEYS[this._previewIdx]}` : '',
       ].join('\n'));
     }
   }
