@@ -54,19 +54,44 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     scene.anims.create({ key: 'player_dead',       frames: row(CONFIG.ANIM.DEAD.row,       CONFIG.ANIM.DEAD.frames),       frameRate: 8,  repeat:  0 });
   }
 
+  // Registers the same animation keys but sourced from the 64×64 spritesheet.
+  // Frame layout (4 cols × 9 rows): row 0 = idle, row 1 = airborne, row 2 = shoot/run,
+  // row 3 = hit, row 4 = charge, row 5 = narrative, row 6 = defeat, row 7 = status, row 8 = platforming.
+  static setupAnims64(scene) {
+    if (!scene.textures.exists('player_64x64')) return;
+    if (scene.anims.exists('player_idle')) return;
+
+    const f = (frames) => scene.anims.generateFrameNumbers('player_64x64', { frames });
+
+    scene.anims.create({ key: 'player_idle',       frames: f([0]),     frameRate: 5,  repeat: -1 });
+    scene.anims.create({ key: 'player_run',        frames: f([8, 9]),  frameRate: 8,  repeat: -1 });
+    scene.anims.create({ key: 'player_jump',       frames: f([4]),     frameRate: 10, repeat:  0 });
+    scene.anims.create({ key: 'player_fall',       frames: f([11]),    frameRate: 8,  repeat:  0 });
+    scene.anims.create({ key: 'player_shoot_idle', frames: f([2]),     frameRate: 10, repeat: -1 });
+    scene.anims.create({ key: 'player_shoot_run',  frames: f([8, 9]),  frameRate: 10, repeat: -1 });
+    scene.anims.create({ key: 'player_hurt',       frames: f([12]),    frameRate: 10, repeat:  0 });
+    scene.anims.create({ key: 'player_dead',       frames: f([26]),    frameRate: 8,  repeat:  0 });
+  }
+
   // ─── Constructor ──────────────────────────────────────────────────────────────
 
   constructor(scene, x, y) {
-    const hasSprite = scene.textures.exists('player');
+    const has64     = scene.textures.exists('player_64x64');
+    const hasSprite = has64 || scene.textures.exists('player');
     if (!hasSprite) Player.generateFallbackTexture(scene);
 
-    super(scene, x, y, hasSprite ? 'player' : 'player-rect');
+    const texKey = has64 ? 'player_64x64' : (hasSprite ? 'player' : 'player-rect');
+    super(scene, x, y, texKey);
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
     this.body.setSize(W, H);
     this.body.setMaxVelocityY(CONFIG.MAX_FALL_SPEED);
-    if (hasSprite) this.body.setOffset((FW - W) / 2, (FH - H) / 2);
+    if (hasSprite) {
+      const frameW = has64 ? 64 : FW;
+      const frameH = has64 ? 64 : FH;
+      this.body.setOffset((frameW - W) / 2, (frameH - H) / 2);
+    }
 
     this._hasSprite    = hasSprite;
     this._state        = 'idle';
@@ -79,10 +104,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this._iframeTimer  = 0;
     this._dead         = false;
 
-    Player.setupAnims(scene);
+    if (has64) Player.setupAnims64(scene);
+    else       Player.setupAnims(scene);
     if (hasSprite) this.anims.play('player_idle', true);
 
-    console.log(`[Player] created | sprite:${hasSprite}`);
+    console.log(`[Player] created | tex:${texKey}`);
   }
 
   // ─── State ────────────────────────────────────────────────────────────────────

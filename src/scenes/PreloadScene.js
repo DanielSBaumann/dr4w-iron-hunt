@@ -23,6 +23,9 @@ export class PreloadScene extends Phaser.Scene {
       frameWidth:  CONFIG.PLAYER_FRAME_W,
       frameHeight: CONFIG.PLAYER_FRAME_H,
     });
+    this.load.spritesheet('player_64x64', 'assets/sprites/player/player_64x64.png', {
+      frameWidth: 64, frameHeight: 64,
+    });
     this.load.image('bullet', 'assets/sprites/effects/bullet.png');
   }
 
