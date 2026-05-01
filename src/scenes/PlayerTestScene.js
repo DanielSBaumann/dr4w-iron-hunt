@@ -5,29 +5,38 @@ const WORLD_W  = CONFIG.WIDTH * 2;
 const GROUND_H = 16;
 const GROUND_Y = CONFIG.HEIGHT - GROUND_H;
 
+// Injected at build time by vite.config.js.
+// true  → demo build (portfolio embed): dark bg, no debug text, shooting enabled.
+// false → dev / main game build: white bg, debug HUD visible.
+const DEMO = import.meta.env.VITE_DEMO === 'true';
+
 export class PlayerTestScene extends Phaser.Scene {
   constructor() {
     super({ key: 'PlayerTestScene' });
   }
 
   create() {
-    this.cameras.main.setBackgroundColor(0xFFFFFF);
+    this.cameras.main.setBackgroundColor(DEMO ? CONFIG.COLORS.STAGE1_BG : 0xFFFFFF);
 
     this._makePlatformTex();
     this._makePlatforms();
     this._makePlayer();
+    this._makeBullets();
     this._makeCamera();
     this._makeKeys();
     this._makeHUD();
 
-    this._jumpBuffer  = 0;
-    this._coyoteTime  = 0;
-    this._hasAnims    = false;
+    this._jumpBuffer   = 0;
+    this._coyoteTime   = 0;
+    this._hasAnims     = false;
+    this._shootCooldown = 0;
+    this._facingRight  = true;
 
     this._setupAnims();
+    this.cameras.main.fadeIn(300, 0, 0, 0);
   }
 
-  // ─── Platforms ───────────────────────────────────────────────────────────────
+  // ─── Textures ─────────────────────────────────────────────────────────────────
 
   _makePlatformTex() {
     if (this.textures.exists('px')) return;
@@ -37,6 +46,8 @@ export class PlayerTestScene extends Phaser.Scene {
     g.generateTexture('px', 1, 1);
     g.destroy();
   }
+
+  // ─── Platforms ────────────────────────────────────────────────────────────────
 
   _makePlatforms() {
     this._ground = this.physics.add.staticGroup();
@@ -58,7 +69,7 @@ export class PlayerTestScene extends Phaser.Scene {
     });
   }
 
-  // ─── Player ──────────────────────────────────────────────────────────────────
+  // ─── Player ───────────────────────────────────────────────────────────────────
 
   _makePlayer() {
     const tex = this.textures.exists('player') ? 'player' : '__DEFAULT';
@@ -79,21 +90,41 @@ export class PlayerTestScene extends Phaser.Scene {
 
     this.anims.create({ key: 'p_idle', frames: frames(0, 3), frameRate: 6,  repeat: -1 });
     this.anims.create({ key: 'p_run',  frames: frames(1, 4), frameRate: 10, repeat: -1 });
-    this.anims.create({ key: 'p_jump', frames: frames(2, 1), frameRate: 8,  repeat: 0  });
-    this.anims.create({ key: 'p_fall', frames: frames(3, 1), frameRate: 8,  repeat: 0  });
+    this.anims.create({ key: 'p_jump', frames: frames(2, 1), frameRate: 8,  repeat:  0 });
+    this.anims.create({ key: 'p_fall', frames: frames(3, 1), frameRate: 8,  repeat:  0 });
 
     this._p.anims.play('p_idle', true);
     this._hasAnims = true;
   }
 
-  // ─── Camera ──────────────────────────────────────────────────────────────────
+  // ─── Bullets ──────────────────────────────────────────────────────────────────
+
+  _makeBullets() {
+    this._bullets = this.physics.add.group();
+  }
+
+  _fireBullet() {
+    const dir = this._facingRight ? 1 : -1;
+    const bx  = this._p.x + dir * 20;
+    const by  = this._p.y - 4;
+    const tex = this.textures.exists('bullet') ? 'bullet' : '__DEFAULT';
+
+    const b = this._bullets.create(bx, by, tex);
+    b.body.setAllowGravity(false);
+    b.body.setVelocityX(dir * CONFIG.BULLET_SPEED);
+    if (!this.textures.exists('bullet')) b.setTint(0x40D0F0).setDisplaySize(8, 4);
+    if (dir < 0) b.setFlipX(true);
+    b.setData('startX', bx);
+  }
+
+  // ─── Camera ───────────────────────────────────────────────────────────────────
 
   _makeCamera() {
     this.cameras.main.setBounds(0, 0, WORLD_W, CONFIG.HEIGHT);
     this.cameras.main.startFollow(this._p, true, 1, 1);
   }
 
-  // ─── Keys ────────────────────────────────────────────────────────────────────
+  // ─── Keys ─────────────────────────────────────────────────────────────────────
 
   _makeKeys() {
     this._cur  = this.input.keyboard.createCursorKeys();
@@ -104,20 +135,32 @@ export class PlayerTestScene extends Phaser.Scene {
     this._keyX = this.input.keyboard.addKey('X');
   }
 
-  // ─── HUD ─────────────────────────────────────────────────────────────────────
+  // ─── HUD ──────────────────────────────────────────────────────────────────────
 
   _makeHUD() {
-    this._dbg = this.add.text(4, 4, '', {
-      fontFamily: 'monospace', fontSize: '5px', color: '#000000', lineSpacing: 2,
-    }).setScrollFactor(0).setDepth(10);
+    const CX = CONFIG.WIDTH / 2;
 
-    this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT - 5,
-      'WASD/ARROWS move+jump   Z/X shoot', {
-      fontFamily: 'monospace', fontSize: '4px', color: '#333333',
-    }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(10);
+    if (DEMO) {
+      // Demo: clean controls hint, visible against dark background
+      this.add.text(CX, CONFIG.HEIGHT - 6,
+        'A / D  move   ·   W / SPACE  jump   ·   Z / X  shoot', {
+        fontFamily: 'monospace', fontSize: '4px', color: '#4A5E76',
+      }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(10);
+      this._dbg = null;
+    } else {
+      // Dev: full debug HUD (physics state visible)
+      this._dbg = this.add.text(4, 4, '', {
+        fontFamily: 'monospace', fontSize: '5px', color: '#000000', lineSpacing: 2,
+      }).setScrollFactor(0).setDepth(10);
+
+      this.add.text(CX, CONFIG.HEIGHT - 5,
+        'WASD/ARROWS move+jump   Z/X shoot', {
+        fontFamily: 'monospace', fontSize: '4px', color: '#333333',
+      }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(10);
+    }
   }
 
-  // ─── Update ──────────────────────────────────────────────────────────────────
+  // ─── Update ───────────────────────────────────────────────────────────────────
 
   update(_t, dt) {
     const p   = this._p;
@@ -132,16 +175,17 @@ export class PlayerTestScene extends Phaser.Scene {
                   || Phaser.Input.Keyboard.JustDown(cur.space)
                   || Phaser.Input.Keyboard.JustDown(this._keyW);
     const jumpHeld = cur.up.isDown || cur.space.isDown || this._keyW.isDown;
+    const shooting = this._keyZ.isDown || this._keyX.isDown;
 
     // Coyote + buffer
-    if (grounded)   this._coyoteTime = CONFIG.COYOTE_MS;
-    else            this._coyoteTime = Math.max(0, this._coyoteTime - dt);
-    if (jumpJust)   this._jumpBuffer = CONFIG.JUMP_BUFFER_MS;
-    else            this._jumpBuffer = Math.max(0, this._jumpBuffer - dt);
+    if (grounded)  this._coyoteTime = CONFIG.COYOTE_MS;
+    else           this._coyoteTime = Math.max(0, this._coyoteTime - dt);
+    if (jumpJust)  this._jumpBuffer = CONFIG.JUMP_BUFFER_MS;
+    else           this._jumpBuffer = Math.max(0, this._jumpBuffer - dt);
 
     // Horizontal
-    if (left)       { b.setVelocityX(-CONFIG.WALK_SPEED); p.setFlipX(true);  }
-    else if (right) { b.setVelocityX( CONFIG.WALK_SPEED); p.setFlipX(false); }
+    if (left)       { b.setVelocityX(-CONFIG.WALK_SPEED); p.setFlipX(true);  this._facingRight = false; }
+    else if (right) { b.setVelocityX( CONFIG.WALK_SPEED); p.setFlipX(false); this._facingRight = true;  }
     else            { b.setVelocityX(0); }
 
     // Jump
@@ -154,6 +198,21 @@ export class PlayerTestScene extends Phaser.Scene {
       b.setVelocityY(CONFIG.JUMP_CUT_VY);
     }
 
+    // Shoot
+    this._shootCooldown = Math.max(0, this._shootCooldown - dt);
+    if (shooting && this._shootCooldown <= 0) {
+      this._fireBullet();
+      this._shootCooldown = CONFIG.SHOOT_COOLDOWN_MS;
+    }
+
+    // Bullet range cleanup
+    [...this._bullets.getChildren()].forEach(bullet => {
+      if (!bullet.active) return;
+      if (Math.abs(bullet.x - (bullet.getData('startX') ?? 0)) > CONFIG.BULLET_RANGE) {
+        bullet.destroy();
+      }
+    });
+
     // Animations
     if (this._hasAnims) {
       const moving = Math.abs(b.velocity.x) > 5;
@@ -163,11 +222,13 @@ export class PlayerTestScene extends Phaser.Scene {
       p.anims.play(anim, true);
     }
 
-    // Debug HUD
-    this._dbg.setText([
-      `vx/vy : ${b.velocity.x.toFixed(0)} / ${b.velocity.y.toFixed(0)}`,
-      `pos   : ${p.x.toFixed(0)}, ${p.y.toFixed(0)}`,
-      `floor : ${grounded}`,
-    ].join('\n'));
+    // Debug HUD (dev build only — null in demo)
+    if (this._dbg) {
+      this._dbg.setText([
+        `vx/vy : ${b.velocity.x.toFixed(0)} / ${b.velocity.y.toFixed(0)}`,
+        `pos   : ${p.x.toFixed(0)}, ${p.y.toFixed(0)}`,
+        `floor : ${grounded}`,
+      ].join('\n'));
+    }
   }
 }

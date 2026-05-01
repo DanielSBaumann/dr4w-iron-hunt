@@ -1,5 +1,44 @@
 # Changelog
 
+## [0.4.0] — Web Demo Embed — feature/web-demo-embed — 2026-04-29
+
+### Adicionado
+- **Build mode `demo`**: `npm run build:demo` gera `dist-demo/` com `VITE_DEMO=true`
+  injetado em compile-time via `vite.config.js define`; tree-shaking elimina cenas não
+  usadas na demo (Intro, Stage1, Menu, etc.)
+- **`DemoPreloadScene`**: carrega apenas os dois WebP de artconcept (`logo.webp`,
+  `title_screen.webp`) + sprites PNG (`player.png`, `bullet.png`); intro panels ausentes
+- **`DemoStartScene`**: tela título simplificada — `title_screen.webp` escalado por fitScale,
+  scanlines overlay, badge "[ WORK IN PROGRESS ]", prompt piscante "> PRESS ANY KEY <",
+  fade in/out 500ms/350ms; vai para `PlayerTestScene`
+- **PlayerTestScene — modo demo**: fundo escuro (`STAGE1_BG`), tiro habilitado,
+  cooldown e range limit funcionais, sem debug HUD, fade in 300ms, hint de controles
+  minimalista na borda inferior
+- **Assets WebP isolados**: `public/assets-demo/artconcepts/` contém apenas os dois
+  artconcepts convertidos (`dr4w-iron-hunt_LOGO_1.webp` 59KB, `title_screen.webp` 187KB);
+  os PNGs originais em `public/assets/artconcepts/` não foram modificados
+- **`demoPrunePlugin`** (inline no `vite.config.js`): hook `closeBundle` remove todos os
+  `.png` de `dist-demo/assets/artconcepts/` após o bundle ser escrito — impede que Vite
+  copie os 18MB de artconcepts PNG para o output da demo
+- **`tools/convert_demo_assets.py`**: script reproduzível para converter artconcepts
+  selecionados para WebP (qualidade 82, method 6); não toca outros arquivos
+- **`docs/web-demo.md`**: guia de arquitetura, estratégia de assets, checklist de
+  validação local e plano de integração no landing page
+- **`docs/specs/web-demo-embed.md`**: SDD completo do sistema de embed
+
+### Resultado de tamanho
+| Build | Antes | Depois |
+|---|---|---|
+| `dist-demo/` | ~20MB | **1.8MB** |
+| Gzipado estimado | ~7MB | **~650KB** |
+
+### Não alterado
+- Assets PNG em `public/assets/` — intactos
+- `PreloadScene` (jogo principal) — sem mudanças
+- Flow do jogo principal (`npm run dev` / `npm run build`) — sem mudanças
+
+---
+
 ## [0.3.0] — Milestone 1 — Stage 1 jogável — 2026-04-29
 
 ### Adicionado

@@ -52,19 +52,60 @@ python3 tools/generate_assets.py
 ## Build
 
 ```bash
-npm run build          # → dist/  (itch.io ZIP ou hospedagem estática)
-npm run build:pages    # → GitHub Pages
-npm run preview        # prévia do build local
+npm run build          # → dist/  (jogo principal — assets PNG, todas as cenas)
+npm run build:pages    # → dist/  com base=/dr4w-iron-hunt/ para GitHub Pages
+npm run preview        # prévia do build principal
 ```
+
+### Build da demo web (portfólio)
+
+A demo é um build separado com assets WebP otimizados e flow simplificado (sem intro cinemática).
+Os PNGs do jogo principal nunca são tocados.
+
+```bash
+npm run build:demo     # → dist-demo/  (~1.8MB, gzipado ~650KB)
+npm run preview:demo   # prévia em http://localhost:4174/dr4w-iron-hunt/
+```
+
+**Diferenças entre builds:**
+
+| | Jogo principal | Demo (portfólio) |
+|---|---|---|
+| Assets de cena | PNG (qualidade máxima) | WebP (~92% menor) |
+| Flow de cenas | Boot → Preload → Intro → Start → … | Boot → DemoPreload → DemoStart → PlayerTest |
+| HUD | Debug HUD completo | Hint de controles minimalista |
+| Fundo PlayerTest | Branco | `STAGE1_BG` escuro |
+| Tiro | Habilitado | Habilitado |
+| Deploy | GitHub Pages / itch.io | GitHub Pages (`/dr4w-iron-hunt/`) |
+
+> **Deploy do GitHub Pages é manual.** Não há CI/CD automático. Após revisar a branch,
+> copiar o conteúdo de `dist-demo/` para o branch `gh-pages` manualmente.
+
+### Converter assets para WebP (demo)
+
+```bash
+pip install Pillow
+python3 tools/convert_demo_assets.py
+```
+
+Converte apenas `dr4w-iron-hunt_LOGO_1.png` e `title_screen.png` para WebP em
+`public/assets-demo/artconcepts/`. Os PNGs originais em `public/assets/artconcepts/`
+não são modificados.
 
 ---
 
 ## Fluxo de cenas
 
+**Jogo principal:**
 ```
 Boot → Preload → Intro (logo ×3 + painéis ×3) → Start (título) → PlayerTestScene
                                                                          ↓
-                                                               (→ GameScene — Milestone 1)
+                                                               (→ Stage1Scene — Milestone 1)
+```
+
+**Demo (portfólio):**
+```
+Boot → DemoPreload → DemoStart (título com WebP) → PlayerTestScene → GameOverScene
 ```
 
 ### Controles (PlayerTestScene)
@@ -83,31 +124,41 @@ Coyote time + jump buffer implementados.
 ## Estrutura
 
 ```
-iron-hunt/
-├── public/assets/
-│   ├── artconcepts/        # arte de referência (logo, título, intro, sprites ref)
-│   ├── sprites/player/     # player.png — atlas gerado
-│   ├── sprites/effects/    # bullet.png, muzzle_flash.png
-│   └── audio/              # (próximo milestone)
+dr4w-iron-hunt/
+├── public/
+│   ├── assets/
+│   │   ├── artconcepts/        # arte de referência PNG (logo, título, intro, sprites ref)
+│   │   ├── sprites/player/     # player.png — atlas gerado
+│   │   ├── sprites/effects/    # bullet.png, muzzle_flash.png
+│   │   └── audio/              # (próximo milestone)
+│   └── assets-demo/
+│       └── artconcepts/        # WebP otimizados — APENAS para demo build
 ├── src/
-│   ├── main.js             # bootstrap Phaser
+│   ├── main.js             # bootstrap Phaser (alterna cenas por VITE_DEMO)
 │   ├── config.js           # constantes globais (física, paleta, animações)
 │   ├── scenes/
 │   │   ├── BootScene.js
-│   │   ├── PreloadScene.js
-│   │   ├── IntroScene.js        # logo + 3 painéis de história com skip
-│   │   ├── StartScene.js        # tela título
-│   │   ├── PlayerTestScene.js   # arena de teste: movimento, pulo, tiro
-│   │   └── [Game/HUD/Menu/Pause/GameOver/Win]Scene.js  # stubs
+│   │   ├── PreloadScene.js          # jogo principal
+│   │   ├── DemoPreloadScene.js      # demo — carrega WebP + sprites PNG
+│   │   ├── IntroScene.js            # logo + 3 painéis de história com skip
+│   │   ├── StartScene.js            # tela título (jogo principal)
+│   │   ├── DemoStartScene.js        # tela título simplificada (demo)
+│   │   ├── PlayerTestScene.js       # arena de teste: movimento, pulo, tiro
+│   │   ├── Stage1Scene.js           # Fase 1 completa (Milestone 1)
+│   │   └── [Game/HUD/Menu/Pause/GameOver/Win]Scene.js
 │   ├── entities/
-│   │   ├── Player.js       # Dr4w: física, animações, tiro, estados
+│   │   ├── Player.js       # Dr4w: física, animações, tiro, HP, i-frames
 │   │   └── Projectile.js   # projétil
 │   └── systems/
 │       └── InputSystem.js  # WASD/Setas/Space/Z/X → ações nomeadas
 ├── tools/
-│   └── generate_assets.py  # extrai sprites da ref e gera atlas + efeitos
-├── artconcepts/            # arte conceitual original (não servida)
-└── docs/                   # CONTEXT.md, MILESTONES.md, game-design/
+│   ├── generate_assets.py      # extrai sprites da ref e gera atlas + efeitos
+│   └── convert_demo_assets.py  # converte artconcepts PNG → WebP para demo
+├── docs/
+│   ├── CONTEXT.md, MILESTONES.md
+│   ├── game-design/             # GDD, história, design de personagem e mundo
+│   └── specs/web-demo-embed.md  # SDD do sistema de embed no portfólio
+└── artconcepts/                 # arte conceitual original (não servida)
 ```
 
 ---
@@ -151,6 +202,8 @@ Extraído por pixel analysis de `sprites.png` (arte de referência em alta resol
 - [`docs/CONTEXT.md`](docs/CONTEXT.md) — constantes, paleta, decisões de arquitetura
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — checklist completo
 - [`docs/game-design/`](docs/game-design/) — GDD, história, design de personagem e mundo
+- [`docs/specs/web-demo-embed.md`](docs/specs/web-demo-embed.md) — SDD: embed da demo no portfólio dr4w.io
+- [`docs/web-demo.md`](docs/web-demo.md) — guia de arquitetura e operação da demo web
 
 ---
 

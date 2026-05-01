@@ -1,12 +1,13 @@
 import Phaser from 'phaser';
 
+const DEMO = import.meta.env.VITE_DEMO === 'true';
+
 export class BootScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BootScene' });
   }
 
   create() {
-    console.log('[BootScene] loaded');
-    this.scene.start('PreloadScene');
+    this.scene.start(DEMO ? 'DemoPreloadScene' : 'PreloadScene');
   }
 }
