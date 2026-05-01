@@ -88,8 +88,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.body.setSize(W, H);
     this.body.setMaxVelocityY(CONFIG.MAX_FALL_SPEED);
     if (hasSprite) {
-      const frameW = has64 ? 64 : FW;
-      const frameH = has64 ? 64 : FH;
+      const frameW = has64 ? 128 : FW;
+      const frameH = has64 ? 128 : FH;
       this.body.setOffset((frameW - W) / 2, (frameH - H) / 2);
     }
 

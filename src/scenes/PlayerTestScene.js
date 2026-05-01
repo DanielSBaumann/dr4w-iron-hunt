@@ -19,7 +19,7 @@ export class PlayerTestScene extends Phaser.Scene {
   preload() {
     this.load.spritesheet('player_64x64',
       'assets/sprites/player/player_64x64.png',
-      { frameWidth: 64, frameHeight: 64 }
+      { frameWidth: 128, frameHeight: 128 }
     );
   }
 
@@ -130,7 +130,7 @@ export class PlayerTestScene extends Phaser.Scene {
   // ─── Camera ───────────────────────────────────────────────────────────────────
 
   _makeCamera() {
-    this.cameras.main.setZoom(1.5);
+    this.cameras.main.setZoom(1.0);
     this.cameras.main.setBounds(0, 0, WORLD_W, CONFIG.HEIGHT);
     this.cameras.main.startFollow(this._p, true, 1, 1);
   }

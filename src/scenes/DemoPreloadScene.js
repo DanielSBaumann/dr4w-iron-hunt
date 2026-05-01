@@ -32,7 +32,7 @@ export class DemoPreloadScene extends Phaser.Scene {
       frameHeight: CONFIG.PLAYER_FRAME_H,
     });
     this.load.spritesheet('player_64x64', 'assets/sprites/player/player_64x64.png', {
-      frameWidth: 64, frameHeight: 64,
+      frameWidth: 128, frameHeight: 128,
     });
     this.load.image('bullet', 'assets/sprites/effects/bullet.png');
   }
