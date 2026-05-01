@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { CONFIG } from '../config.js';
+import { ANIM_64, ANIM_64_KEYS } from '../config/animationRegistry64.js';
 
 const WORLD_W  = CONFIG.WIDTH * 2;
 const GROUND_H = 16;
@@ -15,6 +16,13 @@ export class PlayerTestScene extends Phaser.Scene {
     super({ key: 'PlayerTestScene' });
   }
 
+  preload() {
+    this.load.spritesheet('player_64x64',
+      'assets/sprites/player/player_64x64.png',
+      { frameWidth: 64, frameHeight: 64 }
+    );
+  }
+
   create() {
     this.cameras.main.setBackgroundColor(DEMO ? CONFIG.COLORS.STAGE1_BG : 0xFFFFFF);
 
@@ -26,13 +34,15 @@ export class PlayerTestScene extends Phaser.Scene {
     this._makeKeys();
     this._makeHUD();
 
-    this._jumpBuffer   = 0;
-    this._coyoteTime   = 0;
-    this._hasAnims     = false;
+    this._jumpBuffer    = 0;
+    this._coyoteTime    = 0;
+    this._hasAnims      = false;
     this._shootCooldown = 0;
-    this._facingRight  = true;
+    this._facingRight   = true;
 
     this._setupAnims();
+    this._setup64Anims();
+    this._setup64Preview();
     this.cameras.main.fadeIn(300, 0, 0, 0);
   }
 
@@ -228,7 +238,61 @@ export class PlayerTestScene extends Phaser.Scene {
         `vx/vy : ${b.velocity.x.toFixed(0)} / ${b.velocity.y.toFixed(0)}`,
         `pos   : ${p.x.toFixed(0)}, ${p.y.toFixed(0)}`,
         `floor : ${grounded}`,
+        this._previewSprite ? `64anim: ${ANIM_64_KEYS[this._previewIdx]}` : '',
       ].join('\n'));
     }
+  }
+
+  // ─── 64×64 animation registration ────────────────────────────────────────────
+
+  _setup64Anims() {
+    if (!this.textures.exists('player_64x64')) return;
+    if (this.anims.exists('e64_idle_sway')) return;  // already registered
+
+    for (const [key, cfg] of Object.entries(ANIM_64)) {
+      this.anims.create({
+        key: 'e64_' + key,
+        frames: this.anims.generateFrameNumbers('player_64x64', {
+          frames: cfg.frames,
+        }),
+        frameRate: cfg.frameRate,
+        repeat:    cfg.repeat,
+      });
+    }
+  }
+
+  // ─── Preview sprite (top-right corner, cycles with N / P keys) ───────────────
+
+  _setup64Preview() {
+    if (!this.textures.exists('player_64x64')) return;
+
+    this._previewIdx    = 0;
+    this._previewSprite = this.add
+      .sprite(CONFIG.WIDTH - 40, 40, 'player_64x64')
+      .setScrollFactor(0)
+      .setDepth(20)
+      .setScale(1.5);
+
+    this._previewSprite.anims.play('e64_' + ANIM_64_KEYS[0], true);
+
+    if (!DEMO) {
+      this.add.text(CONFIG.WIDTH - 40, 82, 'N/P cycle', {
+        fontFamily: 'monospace', fontSize: '4px', color: '#4A5E76',
+      }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(20);
+    }
+
+    this._keyN = this.input.keyboard.addKey('N');
+    this._keyP = this.input.keyboard.addKey('P');
+
+    this._keyN.on('down', () => this._cyclePreview(1));
+    this._keyP.on('down', () => this._cyclePreview(-1));
+  }
+
+  _cyclePreview(dir) {
+    if (!this._previewSprite) return;
+    this._previewIdx = (this._previewIdx + dir + ANIM_64_KEYS.length) % ANIM_64_KEYS.length;
+    const key = ANIM_64_KEYS[this._previewIdx];
+    this._previewSprite.anims.play('e64_' + key, true);
+    if (!DEMO) console.log(`[64px] ${this._previewIdx}: ${key}`);
   }
 }
