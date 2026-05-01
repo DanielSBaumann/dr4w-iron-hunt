@@ -81,10 +81,19 @@ export class PlayerTestScene extends Phaser.Scene {
   // ─── Player ───────────────────────────────────────────────────────────────────
 
   _makePlayer() {
-    const tex = this.textures.exists('player_64x64') ? 'player_64x64'
-              : this.textures.exists('player')        ? 'player'
-              : '__DEFAULT';
+    const use64 = this.textures.exists('player_64x64');
+    const tex   = use64                              ? 'player_64x64'
+                : this.textures.exists('player')     ? 'player'
+                : '__DEFAULT';
     this._p = this.physics.add.sprite(60, GROUND_Y - 20, tex);
+    if (use64) {
+      this._p.setScale(0.5);                    // 128px art → 64px world display
+      this._p.body.setSize(CONFIG.PLAYER_HITBOX_W, CONFIG.PLAYER_HITBOX_H);
+      this._p.body.setOffset(
+        (64 - CONFIG.PLAYER_HITBOX_W) / 2,      // center hitbox in 64px display
+        (64 - CONFIG.PLAYER_HITBOX_H) / 2,
+      );
+    }
     this._p.setMaxVelocity(CONFIG.WALK_SPEED * 2, CONFIG.MAX_FALL_SPEED);
     this._p.setCollideWorldBounds(true);
     this.physics.world.setBounds(0, -CONFIG.HEIGHT, WORLD_W, CONFIG.HEIGHT * 2);
@@ -96,8 +105,8 @@ export class PlayerTestScene extends Phaser.Scene {
 
     if (this.textures.exists('player_64x64')) {
       const f = (frames) => this.anims.generateFrameNumbers('player_64x64', { frames });
-      this.anims.create({ key: 'p_idle', frames: f([0]),     frameRate: 5,  repeat: -1 });
-      this.anims.create({ key: 'p_run',  frames: f([8, 9]),  frameRate: 8,  repeat: -1 });
+      this.anims.create({ key: 'p_idle', frames: f([0]),   frameRate: 5,  repeat: -1 });
+      this.anims.create({ key: 'p_run',  frames: f([8]),   frameRate: 8,  repeat: -1 });
       this.anims.create({ key: 'p_jump', frames: f([4]),     frameRate: 10, repeat:  0 });
       this.anims.create({ key: 'p_fall', frames: f([11]),    frameRate: 8,  repeat:  0 });
       this._p.anims.play('p_idle', true);
@@ -138,7 +147,7 @@ export class PlayerTestScene extends Phaser.Scene {
   // ─── Camera ───────────────────────────────────────────────────────────────────
 
   _makeCamera() {
-    this.cameras.main.setZoom(1.75);
+    this.cameras.main.setZoom(1.0);
     this.cameras.main.setBounds(0, 0, WORLD_W, CONFIG.HEIGHT);
     this.cameras.main.startFollow(this._p, true, 1, 1);
   }

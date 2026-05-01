@@ -64,7 +64,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const f = (frames) => scene.anims.generateFrameNumbers('player_64x64', { frames });
 
     scene.anims.create({ key: 'player_idle',       frames: f([0]),     frameRate: 5,  repeat: -1 });
-    scene.anims.create({ key: 'player_run',        frames: f([8, 9]),  frameRate: 8,  repeat: -1 });
+    scene.anims.create({ key: 'player_run',        frames: f([8]),     frameRate: 8,  repeat: -1 });
     scene.anims.create({ key: 'player_jump',       frames: f([4]),     frameRate: 10, repeat:  0 });
     scene.anims.create({ key: 'player_fall',       frames: f([11]),    frameRate: 8,  repeat:  0 });
     scene.anims.create({ key: 'player_shoot_idle', frames: f([2]),     frameRate: 10, repeat: -1 });
@@ -85,12 +85,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
+    if (has64) this.setScale(0.5);  // 128px art displayed at 64px world size
     this.body.setSize(W, H);
     this.body.setMaxVelocityY(CONFIG.MAX_FALL_SPEED);
     if (hasSprite) {
-      const frameW = has64 ? 128 : FW;
-      const frameH = has64 ? 128 : FH;
-      this.body.setOffset((frameW - W) / 2, (frameH - H) / 2);
+      const displayW = has64 ? 64 : FW;   // post-scale display size
+      const displayH = has64 ? 64 : FH;
+      this.body.setOffset((displayW - W) / 2, (displayH - H) / 2);
     }
 
     this._hasSprite    = hasSprite;

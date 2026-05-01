@@ -1,7 +1,7 @@
 import { CONFIG } from '../config.js';
 
 export class CameraSystem {
-  constructor(scene, target, worldW, zoom = 1.75) {
+  constructor(scene, target, worldW, zoom = 1.0) {
     const cam = scene.cameras.main;
     cam.setZoom(zoom);
     cam.setBounds(0, 0, worldW, CONFIG.HEIGHT);
