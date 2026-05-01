@@ -130,6 +130,7 @@ export class PlayerTestScene extends Phaser.Scene {
   // ─── Camera ───────────────────────────────────────────────────────────────────
 
   _makeCamera() {
+    this.cameras.main.setZoom(1.5);
     this.cameras.main.setBounds(0, 0, WORLD_W, CONFIG.HEIGHT);
     this.cameras.main.startFollow(this._p, true, 1, 1);
   }
